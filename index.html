@@ -22,7 +22,7 @@
             display: grid;
             grid-template-columns: 1fr;
             gap: 2rem;
-            max-width: 1200px; 
+            max-width: 1200px; /* Increased max width for the new column */
             width: 100%;
         }
         @media (min-width: 1024px) {
@@ -66,7 +66,7 @@
         <!-- Left Column: Add Class Form -->
         <div id="add-class-form" class="form-card">
             <header class="p-6 border-b border-gray-100">
-                <h1 class="text-3xl font-bold text-gray-800">Recurring Schedule Manager</h1>
+                <h1 class="text-3xl font-bold text-gray-800">Schedule Manager</h1>
                 <p id="userIdDisplay" class="text-sm mt-1 text-gray-500 truncate">User ID: Loading...</p>
             </header>
 
@@ -87,24 +87,14 @@
                         <input type="text" id="teacherName" placeholder="e.g., Ms. Davis, Mr. Smith" required class="input-style">
                     </div>
 
-                    <!-- Day and Time Group (UPDATED) -->
+                    <!-- Date and Time Group -->
                     <div class="flex flex-col sm:flex-row gap-4 mb-5">
                         <div class="flex-1 input-group">
-                            <label for="classDay">Day of Week</label>
-                            <!-- Replaced date input with a select for Day of Week -->
-                            <select id="classDay" required class="input-style bg-white">
-                                <option value="" disabled selected>Select Day</option>
-                                <option value="Monday">Monday</option>
-                                <option value="Tuesday">Tuesday</option>
-                                <option value="Wednesday">Wednesday</option>
-                                <option value="Thursday">Thursday</option>
-                                <option value="Friday">Friday</option>
-                                <option value="Saturday">Saturday</option>
-                                <option value="Sunday">Sunday</option>
-                            </select>
+                            <label for="classDate">Date</label>
+                            <input type="date" id="classDate" required class="input-style">
                         </div>
                         <div class="flex-1 input-group">
-                            <label for="classTime">Start Time</label>
+                            <label for="classTime">Time</label>
                             <input type="time" id="classTime" required class="input-style">
                         </div>
                     </div>
@@ -130,8 +120,7 @@
         <!-- Right Column: Schedule View -->
         <div class="schedule-card">
             <div class="p-6 border-b border-gray-100">
-                <h2 class="text-2xl font-bold text-gray-800">Current Weekly Schedule</h2>
-                <p class="text-sm text-gray-500">Sorted by Day (Mon-Sun) and Time.</p>
+                <h2 class="text-2xl font-bold text-gray-800">Current Schedule</h2>
             </div>
             <div class="p-6 overflow-x-auto">
                 <div id="scheduleContainer">
@@ -145,8 +134,7 @@
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
         import { getAuth, signInAnonymously, signInWithCustomToken, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
-        // NOTE: Timestamp is no longer strictly needed for sorting but kept for potential future use like creation date/time.
-        import { getFirestore, collection, addDoc, onSnapshot, deleteDoc, doc, Timestamp, query, setLogLevel } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+        import { getFirestore, collection, addDoc, onSnapshot, deleteDoc, doc, Timestamp, query, orderBy, setLogLevel } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 
         // Set log level for debugging
         setLogLevel('Debug');
@@ -166,29 +154,6 @@
         const scheduleContainer = document.getElementById('scheduleContainer');
         const messageBox = document.getElementById('messageBox');
         const userIdDisplay = document.getElementById('userIdDisplay');
-
-        // Define the desired order of days for client-side sorting
-        const dayOrder = {
-            'Monday': 0, 'Tuesday': 1, 'Wednesday': 2, 'Thursday': 3,
-            'Friday': 4, 'Saturday': 5, 'Sunday': 6
-        };
-
-        // Custom comparison function for sorting classes by Day of Week then by Time
-        function compareClasses(a, b) {
-            // 1. Sort by Day of Week
-            const dayA = dayOrder[a.classDay] !== undefined ? dayOrder[a.classDay] : 99; // Default to end if day is missing/invalid
-            const dayB = dayOrder[b.classDay] !== undefined ? dayOrder[b.classDay] : 99;
-            if (dayA !== dayB) {
-                return dayA - dayB;
-            }
-
-            // 2. Sort by Time (HH:MM format)
-            if (a.classTime < b.classTime) return -1;
-            if (a.classTime > b.classTime) return 1;
-
-            return 0; // Items are the same
-        }
-
 
         function displayMessage(message, isError = false) {
             messageBox.classList.remove('hidden', 'bg-green-100', 'text-green-700', 'bg-red-100', 'text-red-700');
@@ -247,25 +212,32 @@
             if (!classesRef) return;
 
             const className = document.getElementById('className').value;
-            const teacherName = document.getElementById('teacherName').value;
-            // Get the new day of the week value
-            const classDay = document.getElementById('classDay').value; 
+            const teacherName = document.getElementById('teacherName').value; // Get new field value
+            const classDate = document.getElementById('classDate').value;
             const classTime = document.getElementById('classTime').value;
             const classLocation = document.getElementById('classLocation').value;
 
+            // Combine date and time to create a single timestamp for sorting
+            const dateTimeString = `${classDate}T${classTime}:00`;
+            const classTimestamp = new Date(dateTimeString);
+
+            if (isNaN(classTimestamp)) {
+                displayMessage('Invalid Date or Time entered.', true);
+                return;
+            }
+
             try {
-                // Add the new class document to Firestore
+                // Add the new class document to Firestore, including teacherName
                 await addDoc(classesRef, {
                     className,
-                    teacherName,
-                    classDay, // Store the day of the week instead of the date
+                    teacherName, // Store teacher name
+                    classDate,
                     classTime,
                     classLocation,
-                    // Keeping a simple timestamp for record keeping, but will sort client-side
-                    timestamp: Timestamp.now() 
+                    createdAt: Timestamp.fromDate(classTimestamp) // Use combined date/time for sorting
                 });
 
-                displayMessage(`Class "${className}" added successfully for ${classDay} at ${classTime}!`);
+                displayMessage(`Class "${className}" with ${teacherName} added successfully!`);
                 scheduleForm.reset();
             } catch (error) {
                 console.error("Error adding document: ", error);
@@ -296,9 +268,8 @@
             const classesRef = getClassesCollectionRef();
             if (!classesRef) return;
 
-            // Query the classes - we remove orderBy() and handle sorting client-side 
-            // since Firestore doesn't inherently sort by 'Day of Week' then 'Time' easily without composite indexes.
-            const q = query(classesRef); 
+            // Query the classes, ordered by the timestamp
+            const q = query(classesRef, orderBy("createdAt", "asc"));
 
             // Set up real-time listener
             onSnapshot(q, (snapshot) => {
@@ -316,9 +287,6 @@
 
         // --- Render Schedule to UI ---
         function renderSchedule(classes) {
-            // Sort classes client-side by day of the week and then by time
-            classes.sort(compareClasses);
-
             if (classes.length === 0) {
                 scheduleContainer.innerHTML = '<p class="text-gray-500 p-4">Your schedule is currently empty. Add a class using the form on the left!</p>';
                 return;
@@ -329,8 +297,8 @@
                     <thead>
                         <tr class="bg-blue-50 text-blue-800">
                             <th class="rounded-tl-lg">Subject</th>
-                            <th>Teacher</th>
-                            <th>Day</th> <!-- Updated header -->
+                            <th>Teacher</th> <!-- New column header -->
+                            <th>Date</th>
                             <th>Time</th>
                             <th>Location</th>
                             <th class="rounded-tr-lg">Actions</th>
@@ -343,8 +311,8 @@
                 tableHtml += `
                     <tr class="border-t border-gray-200 hover:bg-gray-50">
                         <td>${cls.className}</td>
-                        <td>${cls.teacherName || 'N/A'}</td>
-                        <td>${cls.classDay || 'N/A'}</td> <!-- Display day of week -->
+                        <td>${cls.teacherName || 'N/A'}</td> <!-- Display teacher name -->
+                        <td>${cls.classDate}</td>
                         <td>${cls.classTime}</td>
                         <td>${cls.classLocation}</td>
                         <td>
@@ -364,6 +332,17 @@
 
             scheduleContainer.innerHTML = tableHtml;
         }
+
+        // Ensure the date input is initialized with today's date if not set by default value
+        window.onload = () => {
+             const dateInput = document.getElementById('classDate');
+             const today = new Date();
+             const year = today.getFullYear();
+             const month = String(today.getMonth() + 1).padStart(2, '0');
+             const day = String(today.getDate()).padStart(2, '0');
+             dateInput.value = `${year}-${month}-${day}`;
+        };
+
     </script>
 </body>
 </html>
