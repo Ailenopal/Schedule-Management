@@ -19,10 +19,12 @@ COLORS = {
     'Teal': '#14B8A6',
     'Indigo': '#6366F1'
 }
+# Map hex color back to name for radio button initialization
+COLOR_TO_NAME = {v: k for k, v in COLORS.items()}
 
 # --- Session State Initialization ---
 def initialize_state():
-    """Initializes the classes list in session state."""
+    """Initializes the classes list and edit_id in session state."""
     if 'classes' not in st.session_state:
         # Load sample data (optional, remove for empty start)
         st.session_state.classes = [
@@ -52,18 +54,17 @@ def time_to_str(t: time) -> str:
     """Converts a time object to a 'HH:MM' string."""
     return t.strftime("%H:%M")
 
-def get_slot_index(start_time: time) -> int:
-    """Gets the index of the hour slot (0-indexed based on TIME_SLOTS)."""
-    # Find the hour slot that this class starts closest to (or at)
-    try:
-        return TIME_SLOTS.index(start_time)
-    except ValueError:
-        # If the start time isn't exactly on the hour, find the preceding hour slot
-        start_hour = start_time.hour
-        for i, t in enumerate(TIME_SLOTS):
-            if t.hour == start_hour:
-                return i
-        return 0 # Fallback to the first slot
+def set_edit_id(class_id):
+    """Sets the class ID to be edited."""
+    st.session_state.edit_id = class_id
+    st.experimental_rerun()
+
+def delete_class(class_id):
+    """Deletes a class by ID."""
+    st.session_state.classes = [c for c in st.session_state.classes if c['id'] != class_id]
+    st.success("Class deleted successfully!")
+    st.session_state.edit_id = None # Clear edit state if the deleted class was being edited
+    st.experimental_rerun()
 
 # --- CRUD Operations ---
 def add_or_update_class(data):
@@ -91,12 +92,6 @@ def add_or_update_class(data):
     # Rerun to clear form and redraw schedule
     st.experimental_rerun()
 
-def delete_class(class_id):
-    """Deletes a class by ID."""
-    st.session_state.classes = [c for c in st.session_state.classes if c['id'] != class_id]
-    st.success("Class deleted successfully!")
-    st.experimental_rerun()
-
 # --- UI Components ---
 def class_form():
     """Displays the Add/Edit class form in a sidebar."""
@@ -114,21 +109,32 @@ def class_form():
             st.session_state.edit_id = None
             is_editing = False
 
+    # Get initial values for the form
+    initial_subject = initial_data.get('subject', '')
+    initial_teacher = initial_data.get('teacher', '')
+    initial_room = initial_data.get('room', '')
+    initial_day = initial_data.get('day', 'Monday')
+    initial_start_time = initial_data.get('startTime', time(9, 0))
+    initial_end_time = initial_data.get('endTime', time(10, 0))
+    initial_color_name = COLOR_TO_NAME.get(initial_data.get('color', COLORS['Blue']), 'Blue')
+
+
     with st.sidebar.form("class_form_inputs", clear_on_submit=True):
-        subject = st.text_input("Subject", value=initial_data.get('subject', ''))
-        teacher = st.text_input("Teacher", value=initial_data.get('teacher', ''))
-        room = st.text_input("Room", value=initial_data.get('room', ''))
-        day = st.selectbox("Day", DAYS, index=DAYS.index(initial_data.get('day', 'Monday')))
+        subject = st.text_input("Subject", value=initial_subject)
+        teacher = st.text_input("Teacher", value=initial_teacher)
+        room = st.text_input("Room", value=initial_room)
+        day = st.selectbox("Day", DAYS, index=DAYS.index(initial_day))
 
         col1, col2 = st.columns(2)
         with col1:
-            start_time = st.time_input("Start Time", value=initial_data.get('startTime', time(9, 0)), step=300) # 5 min step
+            # Step in seconds (300 seconds = 5 minutes)
+            start_time = st.time_input("Start Time", value=initial_start_time, step=300) 
         with col2:
-            end_time = st.time_input("End Time", value=initial_data.get('endTime', time(10, 0)), step=300)
+            end_time = st.time_input("End Time", value=initial_end_time, step=300)
 
-        # Color Selection with radio buttons (more Streamlit-friendly)
+        # Color Selection with radio buttons
         color_name = st.radio("Color", list(COLORS.keys()), 
-                              index=list(COLORS.keys()).index(next(name for name, val in COLORS.items() if val == initial_data.get('color', COLORS['Blue'])), 0),
+                              index=list(COLORS.keys()).index(initial_color_name),
                               key='color_radio')
 
         submitted = st.form_submit_button(f"{'Update' if is_editing else 'Add'} Class")
@@ -164,50 +170,47 @@ def render_schedule_grid():
     # --- Header Row ---
     cols[0].markdown(f"<div style='background-color:#EEF2FF; padding: 16px; border-radius: 8px 0 0 0; text-align:center;'>**Time**</div>", unsafe_allow_html=True)
     for i, day in enumerate(DAYS):
+        # Adjusted padding for the last column's border-radius
         cols[i+1].markdown(f"<div style='background-color:#EEF2FF; padding: 16px; border-radius: {0 if i < len(DAYS) - 1 else 8}px {0 if i < len(DAYS) - 1 else 8}px 0 0; text-align:center;'>**{day}**</div>", unsafe_allow_html=True)
 
-    # --- Time Slots & Classes ---
-    
     # Group classes by day for easier lookup
     classes_by_day = {day: [c for c in st.session_state.classes if c['day'] == day] for day in DAYS}
     
+    # Base height for one hour slot (96px)
+    SLOT_HEIGHT_PX = 96
+    MIN_TO_PX_RATIO = SLOT_HEIGHT_PX / 60
+    
     for i, t in enumerate(TIME_SLOTS):
         # Time Label Column
-        cols[0].markdown(f"<div style='background-color:#F9FAFB; padding: 8px; height: 96px; border-bottom: 1px solid #E5E7EB; display:flex; align-items:flex-start;'>{time_to_str(t)}</div>", unsafe_allow_html=True)
+        cols[0].markdown(f"<div style='background-color:#F9FAFB; padding: 8px; height: {SLOT_HEIGHT_PX}px; border-bottom: 1px solid #E5E7EB; display:flex; align-items:flex-start;'>{time_to_str(t)}</div>", unsafe_allow_html=True)
 
         # Day Columns
         for j, day in enumerate(DAYS):
             
-            # Create a placeholder for the entire hour slot
+            # Container for classes in this hour slot
             with cols[j+1]:
-                
-                # Container for classes in this hour slot
-                st.markdown(f"<div id='slot-{day}-{i}' style='height: 96px; border-bottom: 1px solid #F3F4F6; position: relative;'></div>", unsafe_allow_html=True)
+                # The container provides the background/border for the hour slot
+                st.markdown(f"<div id='slot-{day}-{i}' style='height: {SLOT_HEIGHT_PX}px; border-bottom: 1px solid #F3F4F6; position: relative;'></div>", unsafe_allow_html=True)
                 
                 # Check for classes starting in this slot (or overlapping significantly)
                 for cls in classes_by_day[day]:
                     slot_start_dt = datetime.combine(datetime.today(), t)
                     slot_end_dt = slot_start_dt + timedelta(hours=1)
                     class_start_dt = datetime.combine(datetime.today(), cls['startTime'])
-                    class_end_dt = datetime.combine(datetime.today(), cls['endTime'])
-
+                    
                     # Check if class starts within the slot's time range
                     if slot_start_dt <= class_start_dt < slot_end_dt:
                         
                         duration_minutes = get_class_duration(cls['startTime'], cls['endTime'])
                         
-                        # Calculate position and height relative to the 96px slot
+                        # Calculate position and height relative to the slot
                         minute_offset = cls['startTime'].minute
-                        # Scale factor: 96px is 1 hour (60 minutes) -> 96/60 = 1.6 px/minute
-                        minute_offset_px = minute_offset * (96 / 60)
+                        minute_offset_px = minute_offset * MIN_TO_PX_RATIO
                         
-                        # Note: This is a simplification. The full duration is relative to the start time,
-                        # not just the 96px slot. We need to handle multi-slot classes.
+                        # Height is duration_minutes * MIN_TO_PX_RATIO
+                        height_px = duration_minutes * MIN_TO_PX_RATIO
                         
-                        # Height is duration_minutes * (96 / 60)
-                        height_px = duration_minutes * (96 / 60)
-                        
-                        # Class Block HTML
+                        # Class Block HTML - Removed JS interaction
                         class_block_html = f"""
                         <div style="
                             position: absolute;
@@ -219,48 +222,81 @@ def render_schedule_grid():
                             border-radius: 8px;
                             padding: 8px;
                             color: white;
-                            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+                            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
                             z-index: 10; 
                             overflow: hidden;
                             display: flex;
                             flex-direction: column;
-                            cursor: pointer;"
-                            onclick="
-                                document.getElementById('edit_button_{cls['id']}').click(); 
-                                return false;"
-                        >
-                            <div style="font-weight: 600; margin-bottom: 4px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">{cls['subject']}</div>
-                            <div style="font-size: 12px; opacity: 0.9; line-height: 1.4;">
+                            border: 1px solid rgba(255, 255, 255, 0.5);
+                            ">
+                            <div style="font-weight: 700; margin-bottom: 4px; line-height: 1.2; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">{cls['subject']}</div>
+                            <div style="font-size: 11px; opacity: 0.9; line-height: 1.3;">
                                 👤 {cls['teacher']}<br>
                                 📍 {cls['room']}<br>
                                 {time_to_str(cls['startTime'])} - {time_to_str(cls['endTime'])}
                             </div>
-                            <div style="position: absolute; top: 8px; right: 8px;">
-                                <button id="edit_button_{cls['id']}" style="display: none;" onclick="window.parent.postMessage('edit_{cls['id']}', '*')" title="Edit">✏️</button>
-                                <button id="delete_button_{cls['id']}" style="display: none;" onclick="window.parent.postMessage('delete_{cls['id']}', '*')" title="Delete">🗑️</button>
-                            </div>
                         </div>
                         """
-                        # Streamlit is designed to prevent direct JS injection like the original HTML
-                        # For interaction, we use Streamlit buttons/callbacks *outside* the main HTML block, 
-                        # but we can render the block visually using markdown.
                         st.markdown(class_block_html, unsafe_allow_html=True)
-                        
-                        # Add Streamlit buttons for actual functionality
-                        # These are placed outside the grid but use the key for association
-                        col_action = st.columns([1,1,10])[0] # Use a small column to hide them better
-                        with col_action:
-                            st.button("✏️", key=f"edit_{cls['id']}", help="Edit Class", on_click=lambda c=cls['id']: set_edit_id(c))
-                        
-                        col_action_del = st.columns([1,1,10])[1]
-                        with col_action_del:
-                            st.button("🗑️", key=f"delete_{cls['id']}", help="Delete Class", on_click=delete_class, args=(cls['id'],))
-                        
 
-def set_edit_id(class_id):
-    """Sets the class ID to be edited and opens the form."""
-    st.session_state.edit_id = class_id
-    st.experimental_rerun()
+def render_data_editor():
+    """Renders a data editor for easy class management (Edit/Delete)."""
+    st.markdown("## ⚙️ Class Management")
+
+    # Prepare DataFrame for st.data_editor
+    # Convert time objects to strings for better display and compatibility
+    data = []
+    for cls in st.session_state.classes:
+        data.append({
+            'ID': cls['id'],
+            'Subject': cls['subject'],
+            'Teacher': cls['teacher'],
+            'Room': cls['room'],
+            'Day': cls['day'],
+            'Start': time_to_str(cls['startTime']),
+            'End': time_to_str(cls['endTime']),
+            'Color': cls['color'],
+            'Edit': False, # Dummy column for edit/delete functionality
+            'Delete': False # Dummy column for edit/delete functionality
+        })
+    df = pd.DataFrame(data)
+
+    # Use a modified DataFrame to display in the editor
+    display_df = df.drop(columns=['ID', 'Color']).copy()
+    display_df['Duration'] = (pd.to_datetime(display_df['End'], format='%H:%M') - pd.to_datetime(display_df['Start'], format='%H:%M')).apply(lambda x: f"{int(x.total_seconds() / 3600)}h {int((x.total_seconds() % 3600) / 60)}m")
+    
+    # Configure the data editor to enable editing and deleting through a custom column
+    edited_df = st.data_editor(
+        display_df,
+        column_order=('Subject', 'Teacher', 'Room', 'Day', 'Start', 'End', 'Duration', 'Edit', 'Delete'),
+        column_config={
+            "Edit": st.column_config.ButtonColumn("Edit", help="Click to edit class in sidebar.", on_click=None, default=False, width="small"),
+            "Delete": st.column_config.ButtonColumn("Delete", help="Click to permanently delete class.", default=False, width="small"),
+            "Day": st.column_config.SelectboxColumn("Day", options=DAYS, required=True),
+            "Start": st.column_config.TimeColumn("Start", format="HH:mm"),
+            "End": st.column_config.TimeColumn("End", format="HH:mm"),
+            "Duration": st.column_config.TextColumn("Duration", disabled=True),
+        },
+        hide_index=True
+    )
+    
+    # --- Process Edits/Deletes from the Data Editor ---
+    
+    # Find the row where 'Edit' was clicked
+    edit_clicked_row = edited_df[edited_df['Edit']].head(1)
+    if not edit_clicked_row.empty:
+        # Get the original index from the data editor row
+        original_index = edit_clicked_row.index[0]
+        class_id_to_edit = df.iloc[original_index]['ID']
+        set_edit_id(class_id_to_edit) # This will rerun the app and load the form
+
+    # Find the row where 'Delete' was clicked
+    delete_clicked_row = edited_df[edited_df['Delete']].head(1)
+    if not delete_clicked_row.empty:
+        # Get the original index from the data editor row
+        original_index = delete_clicked_row.index[0]
+        class_id_to_delete = df.iloc[original_index]['ID']
+        delete_class(class_id_to_delete) # This will rerun the app and delete the class
 
 # --- Main App Execution ---
 
@@ -284,6 +320,7 @@ st.markdown("""
     }
     
     /* Ensure all column content has consistent border/padding for grid look */
+    /* This targets the column dividers within the schedule grid */
     [data-testid="column"] > div > div {
         border-right: 1px solid #E5E7EB;
         min-height: 96px; /* Base slot height */
@@ -302,6 +339,10 @@ st.markdown("""
         color: #6B7280;
         font-size: 14px;
     }
+    /* Hide the button text for the tiny button columns used for edit/delete in the original code */
+    /* Not needed anymore, but useful for debugging Streamlit's internal element structure */
+    /*[key^="edit_"] div { display: none; }
+    [key^="delete_"] div { display: none; }*/
 </style>
 """, unsafe_allow_html=True)
 
@@ -320,14 +361,7 @@ st.markdown(f"""
 """, unsafe_allow_html=True)
 
 # --- Layout ---
-col_main, col_form_trigger = st.columns([1, 0.2])
-
-with col_form_trigger:
-    # Button to open the Add form by resetting edit_id
-    if st.button("➕ Add Class", key='add_btn'):
-        st.session_state.edit_id = None 
-        # Rerunning is necessary to clear the form fields if they had old data
-        st.experimental_rerun() 
+col_main, col_management = st.columns([2, 1])
 
 # Render the form in the sidebar
 class_form()
@@ -339,7 +373,10 @@ with col_main:
     render_schedule_grid()
     st.markdown("</div>", unsafe_allow_html=True)
 
+# Render the data editor for management
+with col_management:
+    render_data_editor()
+
 # --- Next Step ---
 st.markdown("---")
-st.info("Tip: You can add, edit, or delete classes. Use the sidebar form to manage your schedule.")
-
+st.info("Tip: Use the **'Add New Class'** button in the sidebar to create a class. Use the **'Class Management'** table to **Edit** or **Delete** existing classes.")
