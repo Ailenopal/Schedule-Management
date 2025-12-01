@@ -4,6 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>School Schedule Builder</title>
+    <!-- Load Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
         /* Custom styles for a cleaner look */
@@ -62,6 +63,7 @@
 
     <div class="main-container">
 
+        <!-- Left Column: Add Class Form -->
         <div id="add-class-form" class="form-card">
             <header class="p-6 border-b border-gray-100">
                 <h1 class="text-3xl font-bold text-gray-800">Schedule Manager</h1>
@@ -73,16 +75,19 @@
                 
                 <form id="scheduleForm">
 
+                    <!-- Class/Subject Name -->
                     <div class="mb-5 input-group">
                         <label for="className">Class/Subject Name</label>
                         <input type="text" id="className" placeholder="e.g., Advanced Calculus, World History" required class="input-style">
                     </div>
 
+                    <!-- Teacher Name -->
                     <div class="mb-5 input-group">
                         <label for="teacherName">Teacher Name</label>
                         <input type="text" id="teacherName" placeholder="e.g., Ms. Davis, Mr. Smith" required class="input-style">
                     </div>
 
+                    <!-- Date and Time Group -->
                     <div class="flex flex-col sm:flex-row gap-4 mb-5">
                         <div class="flex-1 input-group">
                             <label for="classDate">Date</label>
@@ -94,13 +99,16 @@
                         </div>
                     </div>
 
+                    <!-- Room/Location -->
                     <div class="mb-8 input-group">
                         <label for="classLocation">Room/Location</label>
                         <input type="text" id="classLocation" placeholder="e.g., Room 301, Library Annex" required class="input-style">
                     </div>
                     
+                    <!-- Confirmation/Error Message Area -->
                     <div id="messageBox" class="p-3 text-center rounded-lg mb-6 hidden transition duration-300 text-sm"></div>
 
+                    <!-- Action Button -->
                     <button type="submit" id="submitButton" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-semibold py-3 rounded-xl shadow-lg transition duration-300 ease-in-out transform hover:scale-[1.01]" disabled>
                         Loading...
                     </button>
@@ -109,6 +117,7 @@
             </div>
         </div>
         
+        <!-- Right Column: Schedule View -->
         <div class="schedule-card">
             <div class="p-6 border-b border-gray-100">
                 <h2 class="text-2xl font-bold text-gray-800">Current Schedule</h2>
@@ -157,53 +166,7 @@
             }, 5000);
         }
 
-        // Function to get the path to the user's classes collection
-        function getClassesCollectionRef() {
-            if (!userId) {
-                console.error("User ID not available.");
-                return null;
-            }
-            // Private data path: /artifacts/{appId}/users/{userId}/classes
-            return collection(db, `artifacts/${appId}/users/${userId}/classes`);
-        }
-        
-        // --- Demo Data Insertion Function (NEW) ---
-        async function addDemoClass() {
-            // Use a flag to ensure the demo class is only added once per session/user.
-            if (!userId || window.demoClassAdded) {
-                return;
-            }
-
-            const classesRef = getClassesCollectionRef();
-            if (!classesRef) return;
-
-            // Define the class data
-            const demoClass = {
-                className: 'Advanced Calculus',
-                teacherName: 'Ms. Davis',
-                classDate: '2025-12-02', // Tuesday, December 2, 2025
-                classTime: '10:00',
-                classLocation: 'Room 301',
-            };
-
-            const dateTimeString = `${demoClass.classDate}T${demoClass.classTime}:00`;
-            const classTimestamp = new Date(dateTimeString);
-
-            try {
-                // Check if a document with this className already exists before adding,
-                // but for simplicity, we'll just add it and rely on the flag.
-                await addDoc(classesRef, {
-                    ...demoClass,
-                    createdAt: Timestamp.fromDate(classTimestamp) // Use combined date/time for sorting
-                });
-                console.log('Demo class added successfully.');
-                window.demoClassAdded = true; // Set flag
-            } catch (error) {
-                console.error("Error adding demo class: ", error);
-            }
-        }
-
-        // --- Authentication & Initialization Flow (MODIFIED) ---
+        // --- Authentication & Initialization Flow ---
         onAuthStateChanged(auth, async (user) => {
             if (user) {
                 userId = user.uid;
@@ -211,7 +174,6 @@
                 submitButton.textContent = 'Add Class to Schedule';
                 submitButton.disabled = false;
                 setupScheduleListener();
-                await addDemoClass(); // <-- ADDED: Insert the demo class after successful auth
             } else {
                 try {
                     if (initialAuthToken) {
@@ -227,6 +189,16 @@
             }
         });
 
+        // Function to get the path to the user's classes collection
+        function getClassesCollectionRef() {
+            if (!userId) {
+                console.error("User ID not available.");
+                return null;
+            }
+            // Private data path: /artifacts/{appId}/users/{userId}/classes
+            return collection(db, `artifacts/${appId}/users/${userId}/classes`);
+        }
+        
         // --- Add Class Functionality (Write to Firestore) ---
         scheduleForm.addEventListener('submit', async (e) => {
             e.preventDefault();
@@ -325,7 +297,8 @@
                     <thead>
                         <tr class="bg-blue-50 text-blue-800">
                             <th class="rounded-tl-lg">Subject</th>
-                            <th>Teacher</th> <th>Date</th>
+                            <th>Teacher</th> <!-- New column header -->
+                            <th>Date</th>
                             <th>Time</th>
                             <th>Location</th>
                             <th class="rounded-tr-lg">Actions</th>
@@ -338,7 +311,8 @@
                 tableHtml += `
                     <tr class="border-t border-gray-200 hover:bg-gray-50">
                         <td>${cls.className}</td>
-                        <td>${cls.teacherName || 'N/A'}</td> <td>${cls.classDate}</td>
+                        <td>${cls.teacherName || 'N/A'}</td> <!-- Display teacher name -->
+                        <td>${cls.classDate}</td>
                         <td>${cls.classTime}</td>
                         <td>${cls.classLocation}</td>
                         <td>
