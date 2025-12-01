@@ -153,22 +153,45 @@ with col2:
             # 2. Sort by Time for correct temporal order on the selected day
             df_filtered = df_filtered.sort_values(by='Time', ascending=True)
 
-          # 3. Apply custom CSS for the Delete button style
-            st.markdown("""
-            <style>
-            .stButton>button {
-                padding: 4px 10px;
-                font-size: 12px;
-...
-            }
-            /* Styling for the red Delete button specifically */
-            div[data-testid*="stHorizontalBlock"] .stButton:nth-child(6) > button {
-                background-color: #ef4444; /* red-500 */
-                color: white;
-            }
-...
-            </style>
-            """, unsafe_allow_html=True)
+           # 3. Apply custom CSS for the Delete button style
+
+            st.markdown("""
+
+            <style>
+
+            .stButton>button {
+
+                padding: 4px 10px;
+
+                font-size: 12px;
+
+                border-radius: 9999px; /* Rounded pill shape */
+
+                transition: background-color 0.15s;
+
+                border: none !important;
+
+            }
+
+            /* Styling for the red Delete button specifically */
+
+            div[data-testid*="stHorizontalBlock"] .stButton:nth-child(6) > button {
+
+                background-color: #ef4444; /* red-500 */
+
+                color: white;
+
+            }
+
+            div[data-testid*="stHorizontalBlock"] .stButton:nth-child(6) > button:hover {
+
+                background-color: #dc2626; /* red-700 */
+
+            }
+
+            </style>
+
+            """, unsafe_allow_html=True)
 
 
             # 4. Manually create the table row by row using Streamlit columns
@@ -214,4 +237,5 @@ with col2:
 
     else:
         st.info("Your entire schedule is currently empty. Add a class using the form on the left!")
+
 
