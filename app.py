@@ -5,7 +5,7 @@ import uuid
 
 # --- Configuration ---
 # Set the page configuration for a wide layout
-st.set_page_config(layout="wide", page_title="Streamlit School Schedule")
+st.set_page_config(layout="wide", page_title="School Schedule")
 
 # --- Constants ---
 DAYS_OF_WEEK = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"]
@@ -61,7 +61,7 @@ def set_day_filter(day):
 
 # --- UI Layout ---
 
-st.title("🗓️ Streamlit School Schedule Manager")
+st.title("🗓️ School Schedule Manager")
 
 # Display Simulated User ID
 st.markdown(
@@ -237,5 +237,6 @@ with col2:
 
     else:
         st.info("Your entire schedule is currently empty. Add a class using the form on the left!")
+
 
 
