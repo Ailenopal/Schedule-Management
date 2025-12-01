@@ -3,700 +3,346 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>School Scheduler</title>
+    <title>School Schedule Builder</title>
+    <!-- Load Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
     <style>
-        /* --- General Reset & Layout --- */
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
-
+        /* Custom styles for a cleaner look */
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@100..900&display=swap');
         body {
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
-            background: linear-gradient(135deg, #EFF6FF 0%, #E0E7FF 100%);
-            min-height: 100vh;
-            padding: 20px;
-        }
-
-        .container {
-            max-width: 1400px;
-            margin: 0 auto;
-        }
-
-        /* --- Header Styling --- */
-        header {
+            font-family: 'Inter', sans-serif;
+            background-color: #f7f9fc; /* Light background */
             display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 30px;
-            flex-wrap: wrap;
-            gap: 20px;
-        }
-
-        .header-left {
-            display: flex;
-            align-items: center;
-            gap: 15px;
-        }
-
-        .logo {
-            background: #4F46E5;
-            width: 56px;
-            height: 56px;
-            border-radius: 12px;
-            display: flex;
-            align-items: center;
             justify-content: center;
-            color: white;
-            font-size: 28px;
-        }
-
-        h1 {
-            color: #312E81;
-            font-size: 28px;
-            font-weight: 700;
-        }
-
-        .subtitle {
-            color: #6B7280;
-            font-size: 14px;
-        }
-
-        /* --- Button Styling --- */
-        .btn {
-            background: #4F46E5;
-            color: white;
-            border: none;
-            padding: 12px 24px;
-            border-radius: 8px;
-            cursor: pointer;
-            font-size: 16px;
-            font-weight: 600;
-            transition: background 0.3s;
-        }
-
-        .btn:hover {
-            background: #4338CA;
-        }
-
-        .btn-secondary {
-            background: white;
-            color: #374151;
-            border: 1px solid #D1D5DB;
-        }
-
-        .btn-secondary:hover {
-            background: #F9FAFB;
-        }
-
-        /* --- Schedule Grid Styling --- */
-        .schedule-container {
-            background: white;
-            border-radius: 12px;
-            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-            overflow: hidden;
-        }
-
-        .schedule-wrapper {
-            overflow-x: auto;
-        }
-
-        .schedule-grid {
-            min-width: 800px;
-            display: grid;
-            grid-template-columns: 80px repeat(5, 1fr); /* Time column + 5 Day columns */
-        }
-
-        .header-cell {
-            padding: 16px;
-            text-align: center;
-            background: #EEF2FF;
-            color: #312E81;
-            font-weight: 600;
-            border-bottom: 1px solid #E5E7EB;
-        }
-
-        .time-label {
-            padding: 8px;
-            height: 96px; /* Base height for 1-hour slot */
-            border-bottom: 1px solid #E5E7EB;
-            border-right: 1px solid #E5E7EB;
-            background: #F9FAFB;
-            color: #6B7280;
-            font-size: 14px;
-            display: flex;
             align-items: flex-start;
+            min-height: 100vh;
+            padding: 2rem;
         }
-
-        .day-column {
-            position: relative;
-            border-right: 1px solid #E5E7EB;
-        }
-
-        .time-slot {
-            height: 96px;
-            border-bottom: 1px solid #F3F4F6;
-        }
-
-        /* --- Class Block Styling --- */
-        .class-block {
-            position: absolute;
-            left: 4px;
-            right: 4px;
-            border-radius: 8px;
-            padding: 8px;
-            color: white;
-            cursor: pointer;
-            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-            transition: box-shadow 0.3s;
-            overflow: hidden;
-            z-index: 10; /* Ensure blocks stack correctly */
-        }
-
-        .class-block:hover {
-            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
-        }
-
-        .class-subject {
-            font-weight: 600;
-            margin-bottom: 4px;
-            white-space: nowrap;
-            overflow: hidden;
-            text-overflow: ellipsis;
-        }
-
-        .class-info {
-            font-size: 12px;
-            opacity: 0.9;
-            line-height: 1.4;
-        }
-
-        .class-actions {
-            position: absolute;
-            top: 8px;
-            right: 8px;
-            display: flex;
-            gap: 4px;
-            opacity: 0;
-            transition: opacity 0.3s;
-        }
-
-        .class-block:hover .class-actions {
-            opacity: 1;
-        }
-
-        .icon-btn {
-            background: rgba(255, 255, 255, 0.2);
-            border: none;
-            width: 24px;
-            height: 24px;
-            border-radius: 4px;
-            cursor: pointer;
-            color: white;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 14px;
-            line-height: 1;
-        }
-
-        .icon-btn:hover {
-            background: rgba(255, 255, 255, 0.3);
-        }
-
-        /* --- Modal Styling --- */
-        .modal {
-            display: none;
-            position: fixed;
-            top: 0;
-            left: 0;
+        .main-container {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 2rem;
+            max-width: 1200px; /* Increased max width for the new column */
             width: 100%;
-            height: 100%;
-            background: rgba(0, 0, 0, 0.5);
-            z-index: 1000;
-            align-items: center;
-            justify-content: center;
-            padding: 20px;
         }
-
-        .modal.active {
-            display: flex;
+        @media (min-width: 1024px) {
+            .main-container {
+                grid-template-columns: 1fr 2fr;
+            }
         }
-
-        .modal-content {
-            background: white;
-            border-radius: 12px;
-            width: 100%;
-            max-width: 500px;
-            max-height: 90vh;
-            overflow-y: auto;
-            box-shadow: 0 20px 25px rgba(0, 0, 0, 0.3);
+        .form-card, .schedule-card {
+            background-color: white;
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+            border-radius: 0.75rem; /* rounded-xl */
         }
-
-        .modal-header {
-            padding: 24px;
-            border-bottom: 1px solid #E5E7EB;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-        }
-
-        .modal-title {
-            font-size: 20px;
-            font-weight: 600;
-            color: #111827;
-        }
-
-        .close-btn {
-            background: none;
-            border: none;
-            font-size: 24px;
-            cursor: pointer;
-            color: #6B7280;
-            width: 32px;
-            height: 32px;
-            border-radius: 6px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-        }
-
-        .close-btn:hover {
-            background: #F3F4F6;
-        }
-
-        .modal-body {
-            padding: 24px;
-        }
-
-        /* --- Form Styling --- */
-        .form-group {
-            margin-bottom: 20px;
-        }
-
-        .form-label {
-            display: block;
-            margin-bottom: 8px;
-            color: #374151;
+        .input-group label {
             font-weight: 500;
+            color: #374151;
+            margin-bottom: 0.25rem;
+            display: block;
         }
-
-        .form-input,
-        .form-select {
+        .input-style {
+            padding: 0.6rem 0.75rem;
+            border: 1px solid #d1d5db;
+            border-radius: 0.5rem;
             width: 100%;
-            padding: 10px 12px;
-            border: 1px solid #D1D5DB;
-            border-radius: 8px;
-            font-size: 16px;
+            transition: border-color 0.15s ease-in-out, box-shadow 0.15s ease-in-out;
+        }
+        .input-style:focus {
+            border-color: #3b82f6;
             outline: none;
-            transition: border-color 0.3s;
+            box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.25);
         }
-
-        .form-input:focus,
-        .form-select:focus {
-            border-color: #4F46E5;
-            box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.1);
-        }
-
-        .form-row {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 16px;
-        }
-
-        /* --- Color Palette Styling --- */
-        .color-palette {
-            display: grid;
-            grid-template-columns: repeat(4, 1fr);
-            gap: 8px;
-        }
-
-        .color-option {
-            height: 48px;
-            border-radius: 8px;
-            border: 3px solid transparent;
-            cursor: pointer;
-            transition: all 0.3s;
-        }
-
-        .color-option:hover {
-            transform: scale(1.05);
-        }
-
-        .color-option.selected {
-            border-color: #374151;
-            box-shadow: 0 0 0 2px white, 0 0 0 4px #374151;
-        }
-
-        .form-actions {
-            display: flex;
-            gap: 12px;
-            margin-top: 24px;
-        }
-
-        .form-actions button {
-            flex: 1;
-        }
-
-        /* --- Responsive Adjustments --- */
-        @media (max-width: 768px) {
-            h1 {
-                font-size: 24px;
-            }
-
-            .schedule-grid {
-                font-size: 14px;
-            }
-
-            .time-label {
-                height: 80px;
-                font-size: 12px;
-            }
-
-            .time-slot {
-                height: 80px;
-            }
+        .schedule-table th, .schedule-table td {
+            padding: 0.75rem 1rem;
+            text-align: left;
         }
     </style>
 </head>
 <body>
-    <div class="container">
-        <header>
-            <div class="header-left">
-                <div class="logo">🎓</div>
-                <div>
-                    <h1>School Scheduler</h1>
-                    <div class="subtitle">Organize your weekly classes</div>
-                </div>
-            </div>
-            <button class="btn" onclick="openAddModal()">Add Class</button>
-        </header>
 
-        <div class="schedule-container">
-            <div class="schedule-wrapper">
-                <div class="schedule-grid" id="scheduleGrid">
-                    </div>
-            </div>
-        </div>
-    </div>
+    <div class="main-container">
 
-    <div class="modal" id="classModal">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h2 class="modal-title" id="modalTitle">Add New Class</h2>
-                <button class="close-btn" onclick="closeModal()">×</button>
-            </div>
-            <div class="modal-body">
-                <form id="classForm" onsubmit="handleSubmit(event)">
-                    <input type="hidden" id="classId" value="">
+        <!-- Left Column: Add Class Form -->
+        <div id="add-class-form" class="form-card">
+            <header class="p-6 border-b border-gray-100">
+                <h1 class="text-3xl font-bold text-gray-800">Schedule Manager</h1>
+                <p id="userIdDisplay" class="text-sm mt-1 text-gray-500 truncate">User ID: Loading...</p>
+            </header>
 
-                    <div class="form-group">
-                        <label class="form-label" for="subject">Subject</label>
-                        <input type="text" id="subject" class="form-input" placeholder="e.g., Mathematics" required>
-                    </div>
-
-                    <div class="form-group">
-                        <label class="form-label" for="teacher">Teacher</label>
-                        <input type="text" id="teacher" class="form-input" placeholder="e.g., Mr. Smith" required>
-                    </div>
-
-                    <div class="form-group">
-                        <label class="form-label" for="room">Room</label>
-                        <input type="text" id="room" class="form-input" placeholder="e.g., Room 101" required>
-                    </div>
-
-                    <div class="form-group">
-                        <label class="form-label" for="day">Day</label>
-                        <select id="day" class="form-select" required>
-                            <option value="Monday">Monday</option>
-                            <option value="Tuesday">Tuesday</option>
-                            <option value="Wednesday">Wednesday</option>
-                            <option value="Thursday">Thursday</option>
-                            <option value="Friday">Friday</option>
-                        </select>
-                    </div>
-
-                    <div class="form-row">
-                        <div class="form-group">
-                            <label class="form-label" for="startTime">Start Time</label>
-                            <input type="time" id="startTime" class="form-input" value="09:00" required>
-                        </div>
-
-                        <div class="form-group">
-                            <label class="form-label" for="endTime">End Time</label>
-                            <input type="time" id="endTime" class="form-input" value="10:00" required>
-                        </div>
-                    </div>
-
-                    <div class="form-group">
-                        <label class="form-label">Color</label>
-                        <div class="color-palette" id="colorPalette">
-                            </div>
-                    </div>
-
-                    <div class="form-actions">
-                        <button type="button" class="btn btn-secondary" onclick="closeModal()">Cancel</button>
-                        <button type="submit" class="btn" id="submitBtn">Add Class</button>
-                    </div>
-                </form>
-            </div>
-        </div>
-    </div>
-
-    <script>
-        // --- Configuration & Constants ---
-        const DAYS = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday'];
-        // Time slots are used for the main grid rows (e.g., 08:00, 09:00, etc.)
-        const TIME_SLOTS = ['08:00', '09:00', '10:00', '11:00', '12:00', '13:00', '14:00', '15:00', '16:00', '17:00'];
-        const SLOT_HEIGHT = 96; // Height in pixels for a 1-hour slot (matches CSS)
-        const COLORS = [
-            { name: 'Blue', value: '#3B82F6' },
-            { name: 'Purple', value: '#8B5CF6' },
-            { name: 'Pink', value: '#EC4899' },
-            { name: 'Green', value: '#10B981' },
-            { name: 'Orange', value: '#F59E0B' },
-            { name: 'Red', value: '#EF4444' },
-            { name: 'Teal', value: '#14B8A6' },
-            { name: 'Indigo', value: '#6366F1' }
-        ];
-
-        let classes = []; // Main array to hold all class objects
-        let editingId = null;
-        let selectedColor = COLORS[0].value;
-
-        // --- Utility Functions ---
-
-        /** Generates a unique ID (simple timestamp for this example) */
-        function generateId() {
-            return Date.now().toString();
-        }
-
-        // --- Persistence (using localStorage) ---
-        function loadClasses() {
-            const saved = localStorage.getItem('school_schedule');
-            if (saved) {
-                // Parse the JSON data from local storage
-                classes = JSON.parse(saved);
-            }
-        }
-
-        function saveClasses() {
-            // Save the current state of the classes array to local storage
-            localStorage.setItem('school_schedule', JSON.stringify(classes));
-        }
-
-        // --- Color Palette Management ---
-
-        function renderColorPalette() {
-            const palette = document.getElementById('colorPalette');
-            palette.innerHTML = COLORS.map(color => `
-                <div class="color-option ${color.value === selectedColor ? 'selected' : ''}" 
-                     style="background-color: ${color.value}"
-                     onclick="selectColor('${color.value}')"
-                     title="${color.name}">
-                </div>
-            `).join('');
-        }
-
-        function selectColor(color) {
-            selectedColor = color;
-            renderColorPalette(); // Re-render to show the 'selected' border
-        }
-
-        // --- Schedule Rendering Logic ---
-
-        function renderSchedule() {
-            const grid = document.getElementById('scheduleGrid');
-            grid.innerHTML = ''; // Clear previous grid content
-
-            // 1. Render Header Row (empty corner + days)
-            let html = '<div class="header-cell"></div>';
-            DAYS.forEach(day => {
-                html += `<div class="header-cell">${day}</div>`;
-            });
-
-            // 2. Render Time Rows and Day Columns
-            TIME_SLOTS.forEach((time, index) => {
-                // Time Label
-                html += `<div class="time-label">${time}</div>`;
+            <div class="p-6">
+                <h2 class="text-xl font-semibold mb-6 text-gray-700">Add New Class/Period</h2>
                 
-                // Day columns for this hour
-                DAYS.forEach(day => {
-                    // col-{day}-{index} is the container for all class blocks for that day and hour.
-                    html += `
-                        <div class="day-column" id="col-${day}-${index}">
-                            <div class="time-slot"></div>
+                <form id="scheduleForm">
+
+                    <!-- Class/Subject Name -->
+                    <div class="mb-5 input-group">
+                        <label for="className">Class/Subject Name</label>
+                        <input type="text" id="className" placeholder="e.g., Advanced Calculus, World History" required class="input-style">
+                    </div>
+
+                    <!-- Teacher Name -->
+                    <div class="mb-5 input-group">
+                        <label for="teacherName">Teacher Name</label>
+                        <input type="text" id="teacherName" placeholder="e.g., Ms. Davis, Mr. Smith" required class="input-style">
+                    </div>
+
+                    <!-- Date and Time Group -->
+                    <div class="flex flex-col sm:flex-row gap-4 mb-5">
+                        <div class="flex-1 input-group">
+                            <label for="classDate">Date</label>
+                            <input type="date" id="classDate" required class="input-style">
                         </div>
-                    `;
-                });
-            });
+                        <div class="flex-1 input-group">
+                            <label for="classTime">Time</label>
+                            <input type="time" id="classTime" required class="input-style">
+                        </div>
+                    </div>
 
-            grid.innerHTML = html;
+                    <!-- Room/Location -->
+                    <div class="mb-8 input-group">
+                        <label for="classLocation">Room/Location</label>
+                        <input type="text" id="classLocation" placeholder="e.g., Room 301, Library Annex" required class="input-style">
+                    </div>
+                    
+                    <!-- Confirmation/Error Message Area -->
+                    <div id="messageBox" class="p-3 text-center rounded-lg mb-6 hidden transition duration-300 text-sm"></div>
 
-            // 3. Render Class Blocks onto the grid
-            classes.forEach(cls => {
-                renderClassBlock(cls);
-            });
+                    <!-- Action Button -->
+                    <button type="submit" id="submitButton" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-semibold py-3 rounded-xl shadow-lg transition duration-300 ease-in-out transform hover:scale-[1.01]" disabled>
+                        Loading...
+                    </button>
+                </form>
+
+            </div>
+        </div>
+        
+        <!-- Right Column: Schedule View -->
+        <div class="schedule-card">
+            <div class="p-6 border-b border-gray-100">
+                <h2 class="text-2xl font-bold text-gray-800">Current Schedule</h2>
+            </div>
+            <div class="p-6 overflow-x-auto">
+                <div id="scheduleContainer">
+                    <p class="text-gray-500">Awaiting schedule data...</p>
+                </div>
+            </div>
+        </div>
+
+    </div>
+
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
+        import { getAuth, signInAnonymously, signInWithCustomToken, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+        import { getFirestore, collection, addDoc, onSnapshot, deleteDoc, doc, Timestamp, query, orderBy, setLogLevel } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+
+        // Set log level for debugging
+        setLogLevel('Debug');
+
+        // --- Firebase Setup & Initialization ---
+        const appId = typeof __app_id !== 'undefined' ? __app_id : 'default-app-id';
+        const firebaseConfig = JSON.parse(typeof __firebase_config !== 'undefined' ? __firebase_config : '{}');
+        const initialAuthToken = typeof __initial_auth_token !== 'undefined' ? __initial_auth_token : null;
+
+        let db, auth, userId;
+        const app = initializeApp(firebaseConfig);
+        db = getFirestore(app);
+        auth = getAuth(app);
+        
+        const scheduleForm = document.getElementById('scheduleForm');
+        const submitButton = document.getElementById('submitButton');
+        const scheduleContainer = document.getElementById('scheduleContainer');
+        const messageBox = document.getElementById('messageBox');
+        const userIdDisplay = document.getElementById('userIdDisplay');
+
+        function displayMessage(message, isError = false) {
+            messageBox.classList.remove('hidden', 'bg-green-100', 'text-green-700', 'bg-red-100', 'text-red-700');
+            messageBox.classList.add(isError ? 'bg-red-100' : 'bg-green-100', isError ? 'text-red-700' : 'text-green-700');
+            messageBox.innerHTML = message;
+            messageBox.scrollIntoView({ behavior: 'smooth', block: 'start' });
+
+            setTimeout(() => {
+                messageBox.classList.add('hidden');
+            }, 5000);
         }
 
-        function renderClassBlock(cls) {
-            const startHour = parseInt(cls.startTime.split(':')[0]);
-            const startMinute = parseInt(cls.startTime.split(':')[1]);
-            const endHour = parseInt(cls.endTime.split(':')[0]);
-            const endMinute = parseInt(cls.endTime.split(':')[1]);
-
-            // Calculate duration in hours (e.g., 10:30 - 9:00 = 1.5 hours)
-            const startTimeDecimal = startHour + startMinute / 60;
-            const endTimeDecimal = endHour + endMinute / 60;
-            const durationHours = endTimeDecimal - startTimeDecimal;
-            
-            // The slot index is based on the START hour (e.g., 9:00 starts in the 09:00 slot)
-            const slotIndex = TIME_SLOTS.findIndex(slot => parseInt(slot.split(':')[0]) === startHour);
-            if (slotIndex === -1) return; // Ignore classes outside defined time slots
-
-            const column = document.getElementById(`col-${cls.day}-${slotIndex}`);
-            if (!column) return;
-
-            // Calculate pixel offset from the top of the hour slot (e.g., 30 minutes offset in a 96px slot is 48px)
-            const minuteOffset = (startMinute / 60) * SLOT_HEIGHT;
-            // Calculate pixel height (e.g., 1.5 hours * 96px/hour = 144px)
-            const heightPx = durationHours * SLOT_HEIGHT;
-
-            const block = document.createElement('div');
-            block.className = 'class-block';
-            block.style.backgroundColor = cls.color;
-            block.style.top = `${minuteOffset}px`;
-            block.style.height = `${heightPx}px`;
-            
-            block.innerHTML = `
-                <div class="class-actions">
-                    <button class="icon-btn" onclick="event.stopPropagation(); editClass('${cls.id}')" title="Edit">✏️</button>
-                    <button class="icon-btn" onclick="event.stopPropagation(); deleteClass('${cls.id}')" title="Delete">🗑️</button>
-                </div>
-                <div class="class-subject">${cls.subject}</div>
-                <div class="class-info">
-                    👤 ${cls.teacher}<br>
-                    📍 ${cls.room}<br>
-                    ${cls.startTime} - ${cls.endTime}
-                </div>
-            `;
-
-            // Make the main block click open the edit modal
-            block.onclick = (e) => {
-                // Check if the click target was NOT an action button
-                if (!e.target.closest('.icon-btn')) {
-                    editClass(cls.id);
+        // --- Authentication & Initialization Flow ---
+        onAuthStateChanged(auth, async (user) => {
+            if (user) {
+                userId = user.uid;
+                userIdDisplay.textContent = `User ID: ${userId}`;
+                submitButton.textContent = 'Add Class to Schedule';
+                submitButton.disabled = false;
+                setupScheduleListener();
+            } else {
+                try {
+                    if (initialAuthToken) {
+                        await signInWithCustomToken(auth, initialAuthToken);
+                    } else {
+                        await signInAnonymously(auth);
+                    }
+                } catch (error) {
+                    console.error("Auth error:", error);
+                    displayMessage('Failed to authenticate. Please try reloading the page.', true);
+                    submitButton.textContent = 'Auth Error';
                 }
-            };
-
-            column.appendChild(block);
-        }
-
-        // --- Modal/Form Handling ---
-
-        function openAddModal() {
-            editingId = null;
-            document.getElementById('modalTitle').textContent = 'Add New Class';
-            document.getElementById('submitBtn').textContent = 'Add Class';
-            document.getElementById('classId').value = ''; // Clear ID for adding
-            document.getElementById('classForm').reset();
-            selectedColor = COLORS[0].value; // Reset to default color
-            renderColorPalette();
-            document.getElementById('classModal').classList.add('active');
-        }
-
-        function editClass(id) {
-            const cls = classes.find(c => c.id === id);
-            if (!cls) return;
-
-            editingId = id;
-            document.getElementById('modalTitle').textContent = 'Edit Class';
-            document.getElementById('submitBtn').textContent = 'Update Class';
-            document.getElementById('classId').value = id;
-
-            // Populate form fields with existing data
-            document.getElementById('subject').value = cls.subject;
-            document.getElementById('teacher').value = cls.teacher;
-            document.getElementById('room').value = cls.room;
-            document.getElementById('day').value = cls.day;
-            document.getElementById('startTime').value = cls.startTime;
-            document.getElementById('endTime').value = cls.endTime;
-            selectedColor = cls.color;
-            
-            renderColorPalette();
-            document.getElementById('classModal').classList.add('active');
-        }
-
-        function deleteClass(id) {
-            if (confirm('Are you sure you want to delete this class?')) {
-                // Filter out the class with the given ID
-                classes = classes.filter(c => c.id !== id);
-                saveClasses();
-                renderSchedule();
             }
-        }
+        });
 
-        function closeModal() {
-            document.getElementById('classModal').classList.remove('active');
-            document.getElementById('classForm').reset();
-            editingId = null;
+        // Function to get the path to the user's classes collection
+        function getClassesCollectionRef() {
+            if (!userId) {
+                console.error("User ID not available.");
+                return null;
+            }
+            // Private data path: /artifacts/{appId}/users/{userId}/classes
+            return collection(db, `artifacts/${appId}/users/${userId}/classes`);
         }
-
-        function handleSubmit(e) {
+        
+        // --- Add Class Functionality (Write to Firestore) ---
+        scheduleForm.addEventListener('submit', async (e) => {
             e.preventDefault();
 
-            const startTimeVal = document.getElementById('startTime').value;
-            const endTimeVal = document.getElementById('endTime').value;
-
-            if (endTimeVal <= startTimeVal) {
-                alert("End time must be after the start time.");
+            if (!userId) {
+                displayMessage('Schedule manager is still authenticating. Please wait.', true);
                 return;
             }
 
-            const formData = {
-                subject: document.getElementById('subject').value,
-                teacher: document.getElementById('teacher').value,
-                room: document.getElementById('room').value,
-                day: document.getElementById('day').value,
-                startTime: startTimeVal,
-                endTime: endTimeVal,
-                color: selectedColor
-            };
+            const classesRef = getClassesCollectionRef();
+            if (!classesRef) return;
 
-            if (editingId) {
-                // Update existing class
-                const index = classes.findIndex(c => c.id === editingId);
-                if (index !== -1) {
-                    classes[index] = { ...formData, id: editingId };
-                }
-            } else {
-                // Add new class
-                const newClass = {
-                    ...formData,
-                    id: generateId()
-                };
-                classes.push(newClass);
+            const className = document.getElementById('className').value;
+            const teacherName = document.getElementById('teacherName').value; // Get new field value
+            const classDate = document.getElementById('classDate').value;
+            const classTime = document.getElementById('classTime').value;
+            const classLocation = document.getElementById('classLocation').value;
+
+            // Combine date and time to create a single timestamp for sorting
+            const dateTimeString = `${classDate}T${classTime}:00`;
+            const classTimestamp = new Date(dateTimeString);
+
+            if (isNaN(classTimestamp)) {
+                displayMessage('Invalid Date or Time entered.', true);
+                return;
             }
 
-            saveClasses();
-            renderSchedule();
-            closeModal();
+            try {
+                // Add the new class document to Firestore, including teacherName
+                await addDoc(classesRef, {
+                    className,
+                    teacherName, // Store teacher name
+                    classDate,
+                    classTime,
+                    classLocation,
+                    createdAt: Timestamp.fromDate(classTimestamp) // Use combined date/time for sorting
+                });
+
+                displayMessage(`Class "${className}" with ${teacherName} added successfully!`);
+                scheduleForm.reset();
+            } catch (error) {
+                console.error("Error adding document: ", error);
+                displayMessage('Error saving class. Check the console for details.', true);
+            }
+        });
+
+        // --- Delete Class Functionality (Delete from Firestore) ---
+        window.deleteClass = async (docId) => {
+            if (!userId) {
+                displayMessage('Authentication not complete. Cannot delete.', true);
+                return;
+            }
+            
+            try {
+                // Document path: /artifacts/{appId}/users/{userId}/classes/{docId}
+                const classDocRef = doc(db, `artifacts/${appId}/users/${userId}/classes`, docId);
+                await deleteDoc(classDocRef);
+                displayMessage('Class deleted successfully.');
+            } catch (error) {
+                console.error("Error deleting document: ", error);
+                displayMessage('Error deleting class. Check the console for details.', true);
+            }
+        };
+
+        // --- Schedule Listener (Read from Firestore) ---
+        function setupScheduleListener() {
+            const classesRef = getClassesCollectionRef();
+            if (!classesRef) return;
+
+            // Query the classes, ordered by the timestamp
+            const q = query(classesRef, orderBy("createdAt", "asc"));
+
+            // Set up real-time listener
+            onSnapshot(q, (snapshot) => {
+                const classes = [];
+                snapshot.forEach((doc) => {
+                    classes.push({ id: doc.id, ...doc.data() });
+                });
+
+                renderSchedule(classes);
+            }, (error) => {
+                console.error("Error listening to schedule: ", error);
+                scheduleContainer.innerHTML = '<p class="text-red-500">Error loading schedule.</p>';
+            });
         }
 
-        // --- Initialization ---
-        document.addEventListener('DOMContentLoaded', () => {
-            loadClasses(); // Load data from local storage
-            renderColorPalette(); // Initialize color picker
-            renderSchedule(); // Draw the initial schedule grid
+        // --- Render Schedule to UI ---
+        function renderSchedule(classes) {
+            if (classes.length === 0) {
+                scheduleContainer.innerHTML = '<p class="text-gray-500 p-4">Your schedule is currently empty. Add a class using the form on the left!</p>';
+                return;
+            }
 
-            // Close modal when clicking outside
-            document.getElementById('classModal').addEventListener('click', (e) => {
-                if (e.target.id === 'classModal') {
-                    closeModal();
-                }
+            let tableHtml = `
+                <table class="schedule-table w-full border-collapse">
+                    <thead>
+                        <tr class="bg-blue-50 text-blue-800">
+                            <th class="rounded-tl-lg">Subject</th>
+                            <th>Teacher</th> <!-- New column header -->
+                            <th>Date</th>
+                            <th>Time</th>
+                            <th>Location</th>
+                            <th class="rounded-tr-lg">Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+            `;
+
+            classes.forEach(cls => {
+                tableHtml += `
+                    <tr class="border-t border-gray-200 hover:bg-gray-50">
+                        <td>${cls.className}</td>
+                        <td>${cls.teacherName || 'N/A'}</td> <!-- Display teacher name -->
+                        <td>${cls.classDate}</td>
+                        <td>${cls.classTime}</td>
+                        <td>${cls.classLocation}</td>
+                        <td>
+                            <button onclick="deleteClass('${cls.id}')" 
+                                class="text-sm bg-red-500 hover:bg-red-600 text-white font-medium py-1 px-3 rounded-full transition duration-150">
+                                Delete
+                            </button>
+                        </td>
+                    </tr>
+                `;
             });
-        });
+
+            tableHtml += `
+                    </tbody>
+                </table>
+            `;
+
+            scheduleContainer.innerHTML = tableHtml;
+        }
+
+        // Ensure the date input is initialized with today's date if not set by default value
+        window.onload = () => {
+             const dateInput = document.getElementById('classDate');
+             const today = new Date();
+             const year = today.getFullYear();
+             const month = String(today.getMonth() + 1).padStart(2, '0');
+             const day = String(today.getDate()).padStart(2, '0');
+             dateInput.value = `${year}-${month}-${day}`;
+        };
+
     </script>
 </body>
 </html>
