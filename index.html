@@ -3,345 +3,351 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>School Schedule Builder</title>
-    <!-- Load Tailwind CSS -->
-    <script src="https://cdn.tailwindcss.com"></script>
+    <title>School Schedule Manager</title>
     <style>
-        /* Custom styles for a cleaner look */
-        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@100..900&display=swap');
+        /* --- 🎨 CSS Styling (Mimics Streamlit Layout) --- */
         body {
-            font-family: 'Inter', sans-serif;
-            background-color: #f7f9fc; /* Light background */
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            margin: 0;
+            padding: 20px;
+            background-color: #f0f2f6; /* Light gray background */
+        }
+        .container {
+            max-width: 1400px; /* Wide layout */
+            margin: 0 auto;
+        }
+        .header {
+            color: #262730;
+            padding-bottom: 10px;
+            border-bottom: 2px solid #e0e0e0;
+        }
+        .main-content {
             display: flex;
-            justify-content: center;
-            align-items: flex-start;
-            min-height: 100vh;
-            padding: 2rem;
+            gap: 40px;
+            margin-top: 20px;
         }
-        .main-container {
-            display: grid;
-            grid-template-columns: 1fr;
-            gap: 2rem;
-            max-width: 1200px; /* Increased max width for the new column */
-            width: 100%;
-        }
-        @media (min-width: 1024px) {
-            .main-container {
-                grid-template-columns: 1fr 2fr;
-            }
-        }
-        .form-card, .schedule-card {
+        .column-left {
+            flex: 1; /* Ratio 1 */
+            padding: 20px;
             background-color: white;
-            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
-            border-radius: 0.75rem; /* rounded-xl */
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+            max-height: fit-content;
         }
-        .input-group label {
-            font-weight: 500;
-            color: #374151;
-            margin-bottom: 0.25rem;
-            display: block;
+        .column-right {
+            flex: 2; /* Ratio 2 */
+            padding: 20px;
+            background-color: white;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
         }
-        .input-style {
-            padding: 0.6rem 0.75rem;
-            border: 1px solid #d1d5db;
-            border-radius: 0.5rem;
+
+        /* --- Form Elements --- */
+        input[type="text"], input[type="time"], select {
             width: 100%;
-            transition: border-color 0.15s ease-in-out, box-shadow 0.15s ease-in-out;
+            padding: 10px;
+            margin: 8px 0 16px 0;
+            display: inline-block;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            box-sizing: border-box;
         }
-        .input-style:focus {
-            border-color: #3b82f6;
-            outline: none;
-            box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.25);
+        label {
+            font-weight: 600;
+            font-size: 14px;
         }
-        .schedule-table th, .schedule-table td {
-            padding: 0.75rem 1rem;
-            text-align: left;
+
+        /* --- Buttons --- */
+        .btn {
+            padding: 10px 15px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-weight: 600;
+            transition: background-color 0.2s;
+            margin-top: 10px;
+        }
+        .btn-primary {
+            background-color: #f63366; /* Streamlit primary color */
+            color: white;
+        }
+        .btn-primary:hover {
+            background-color: #e5295c;
+        }
+        .btn-delete {
+            padding: 4px 10px;
+            font-size: 12px;
+            border-radius: 9999px; /* Pill shape */
+            background-color: #ef4444; /* red-500 */
+            color: white;
+            border: none;
+            cursor: pointer;
+            transition: background-color 0.15s;
+        }
+        .btn-delete:hover {
+            background-color: #dc2626; /* red-700 */
+        }
+        
+        /* --- Day Filter Buttons --- */
+        .day-filter-container {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 15px;
+            flex-wrap: wrap;
+        }
+        .btn-day {
+            padding: 8px 12px;
+            border-radius: 8px;
+            border: 1px solid #e0e0e0;
+            background-color: #f0f2f6;
+            color: #333;
+            cursor: pointer;
+        }
+        .btn-day.active {
+            background-color: #f63366;
+            color: white;
+            border-color: #f63366;
+        }
+
+        /* --- Schedule Table --- */
+        .schedule-grid {
+            display: grid;
+            grid-template-columns: 2fr 1.5fr 1fr 1.5fr 0.8fr; /* Mimics col_widths */
+            padding: 10px 0;
+            align-items: center;
+            border-bottom: 1px solid #eee;
+        }
+        .schedule-grid-header {
+            font-weight: bold;
+            color: #262730;
+            border-bottom: 2px solid #e0e0e0;
+        }
+        .schedule-grid > div {
+            padding: 8px 5px;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+        .schedule-empty {
+            padding: 20px;
+            text-align: center;
+            background-color: #e0f7fa;
+            border: 1px solid #00bcd4;
+            border-radius: 4px;
+            color: #00838f;
         }
     </style>
 </head>
 <body>
+    <div class="container">
+        <h1 class="header">🗓️ School Schedule Manager</h1>
+        <p style="font-size: 14px; color: grey; margin-top: -10px;">Session ID (Simulated User ID): <span id="user-id"></span></p>
 
-    <div class="main-container">
-
-        <!-- Left Column: Add Class Form -->
-        <div id="add-class-form" class="form-card">
-            <header class="p-6 border-b border-gray-100">
-                <h1 class="text-3xl font-bold text-gray-800">Schedule Manager</h1>
-                <p id="userIdDisplay" class="text-sm mt-1 text-gray-500 truncate">User ID: Loading...</p>
-            </header>
-
-            <div class="p-6">
-                <h2 class="text-xl font-semibold mb-6 text-gray-700">Add New Class/Period</h2>
-                
-                <form id="scheduleForm">
-
-                    <!-- Class/Subject Name -->
-                    <div class="mb-5 input-group">
-                        <label for="className">Class/Subject Name</label>
-                        <input type="text" id="className" placeholder="e.g., Advanced Calculus, World History" required class="input-style">
-                    </div>
-
-                    <!-- Teacher Name -->
-                    <div class="mb-5 input-group">
-                        <label for="teacherName">Teacher Name</label>
-                        <input type="text" id="teacherName" placeholder="e.g., Ms. Davis, Mr. Smith" required class="input-style">
-                    </div>
-
-                    <!-- Date and Time Group -->
-                    <div class="flex flex-col sm:flex-row gap-4 mb-5">
-                        <div class="flex-1 input-group">
-                            <label for="classDate">Date</label>
-                            <input type="date" id="classDate" required class="input-style">
-                        </div>
-                        <div class="flex-1 input-group">
-                            <label for="classTime">Time</label>
-                            <input type="time" id="classTime" required class="input-style">
-                        </div>
-                    </div>
-
-                    <!-- Room/Location -->
-                    <div class="mb-8 input-group">
-                        <label for="classLocation">Room/Location</label>
-                        <input type="text" id="classLocation" placeholder="e.g., Room 301, Library Annex" required class="input-style">
-                    </div>
+        <div class="main-content">
+            <div class="column-left">
+                <h2>Add New Class/Period</h2>
+                <form id="schedule-form">
                     
-                    <!-- Confirmation/Error Message Area -->
-                    <div id="messageBox" class="p-3 text-center rounded-lg mb-6 hidden transition duration-300 text-sm"></div>
+                    <label for="subject">Class/Subject Name</label>
+                    <input type="text" id="subject" placeholder="e.g., Advanced Calculus, World History" required>
 
-                    <!-- Action Button -->
-                    <button type="submit" id="submitButton" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-semibold py-3 rounded-xl shadow-lg transition duration-300 ease-in-out transform hover:scale-[1.01]" disabled>
-                        Loading...
-                    </button>
+                    <label for="teacher">Teacher Name</label>
+                    <input type="text" id="teacher" placeholder="e.g., Ms. Davis, Mr. Smith" required>
+
+                    <div style="display: flex; gap: 10px;">
+                        <div style="flex: 1;">
+                            <label for="day">Day of the Week</label>
+                            <select id="day" required>
+                                </select>
+                        </div>
+                        <div style="flex: 1;">
+                            <label for="time">Time</label>
+                            <input type="time" id="time" value="09:00" required>
+                        </div>
+                    </div>
+
+                    <label for="location">Room/Location</label>
+                    <input type="text" id="location" placeholder="e.g., Room 301, Library Annex" required>
+
+                    <button type="submit" class="btn btn-primary">➕ Add Class to Schedule</button>
+                    <div id="form-message" style="margin-top: 10px; color: red;"></div>
                 </form>
+            </div>
 
-            </div>
-        </div>
-        
-        <!-- Right Column: Schedule View -->
-        <div class="schedule-card">
-            <div class="p-6 border-b border-gray-100">
-                <h2 class="text-2xl font-bold text-gray-800">Current Schedule</h2>
-            </div>
-            <div class="p-6 overflow-x-auto">
-                <div id="scheduleContainer">
-                    <p class="text-gray-500">Awaiting schedule data...</p>
+            <div class="column-right">
+                <h2>Current Schedule</h2>
+                <h3 id="current-day-subheader"></h3>
+
+                <div class="day-filter-container" id="day-filter-buttons">
+                    </div>
+
+                <div class="schedule-grid schedule-grid-header">
+                    <div>Subject</div>
+                    <div>Teacher</div>
+                    <div>Time</div>
+                    <div>Location</div>
+                    <div>Actions</div>
                 </div>
+                <div id="schedule-table-body">
+                    </div>
+                
             </div>
         </div>
-
     </div>
 
-    <script type="module">
-        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
-        import { getAuth, signInAnonymously, signInWithCustomToken, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
-        import { getFirestore, collection, addDoc, onSnapshot, deleteDoc, doc, Timestamp, query, orderBy, setLogLevel } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+    <script>
+        // --- ☕ JavaScript Logic (Simulates Python Session State and Logic) ---
 
-        // Set log level for debugging
-        setLogLevel('Debug');
+        // Constants
+        const DAYS_OF_WEEK = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"];
 
-        // --- Firebase Setup & Initialization ---
-        const appId = typeof __app_id !== 'undefined' ? __app_id : 'default-app-id';
-        const firebaseConfig = JSON.parse(typeof __firebase_config !== 'undefined' ? __firebase_config : '{}');
-        const initialAuthToken = typeof __initial_auth_token !== 'undefined' ? __initial_auth_token : null;
+        // State (Mimics st.session_state)
+        let schedule = [];
+        let selectedDay = DAYS_OF_WEEK[new Date().getDay() === 0 ? 6 : new Date().getDay() - 1]; // Default to current day
+        const userId = crypto.randomUUID();
 
-        let db, auth, userId;
-        const app = initializeApp(firebaseConfig);
-        db = getFirestore(app);
-        auth = getAuth(app);
-        
-        const scheduleForm = document.getElementById('scheduleForm');
-        const submitButton = document.getElementById('submitButton');
-        const scheduleContainer = document.getElementById('scheduleContainer');
-        const messageBox = document.getElementById('messageBox');
-        const userIdDisplay = document.getElementById('userIdDisplay');
+        // --- DOM Elements ---
+        const userIdSpan = document.getElementById('user-id');
+        const daySelect = document.getElementById('day');
+        const scheduleForm = document.getElementById('schedule-form');
+        const formMessage = document.getElementById('form-message');
+        const dayFilterContainer = document.getElementById('day-filter-buttons');
+        const scheduleTableBody = document.getElementById('schedule-table-body');
+        const currentDaySubheader = document.getElementById('current-day-subheader');
 
-        function displayMessage(message, isError = false) {
-            messageBox.classList.remove('hidden', 'bg-green-100', 'text-green-700', 'bg-red-100', 'text-red-700');
-            messageBox.classList.add(isError ? 'bg-red-100' : 'bg-green-100', isError ? 'text-red-700' : 'text-green-700');
-            messageBox.innerHTML = message;
-            messageBox.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        // --- Initialization ---
 
-            setTimeout(() => {
-                messageBox.classList.add('hidden');
-            }, 5000);
+        function initializeUI() {
+            userIdSpan.textContent = userId;
+            populateDaySelect();
+            renderDayFilters();
+            renderSchedule();
         }
 
-        // --- Authentication & Initialization Flow ---
-        onAuthStateChanged(auth, async (user) => {
-            if (user) {
-                userId = user.uid;
-                userIdDisplay.textContent = `User ID: ${userId}`;
-                submitButton.textContent = 'Add Class to Schedule';
-                submitButton.disabled = false;
-                setupScheduleListener();
-            } else {
-                try {
-                    if (initialAuthToken) {
-                        await signInWithCustomToken(auth, initialAuthToken);
-                    } else {
-                        await signInAnonymously(auth);
-                    }
-                } catch (error) {
-                    console.error("Auth error:", error);
-                    displayMessage('Failed to authenticate. Please try reloading the page.', true);
-                    submitButton.textContent = 'Auth Error';
+        // Populates the Day of the Week dropdown in the form
+        function populateDaySelect() {
+            DAYS_OF_WEEK.forEach(day => {
+                const option = document.createElement('option');
+                option.value = day;
+                option.textContent = day;
+                daySelect.appendChild(option);
+            });
+            // Set default time to 9:00 AM if not set
+            const timeInput = document.getElementById('time');
+            if (!timeInput.value) {
+                timeInput.value = '09:00';
+            }
+        }
+
+        // Renders the day filter buttons
+        function renderDayFilters() {
+            dayFilterContainer.innerHTML = '';
+            DAYS_OF_WEEK.forEach(day => {
+                const button = document.createElement('button');
+                button.textContent = day;
+                button.className = 'btn-day';
+                if (day === selectedDay) {
+                    button.classList.add('active');
                 }
-            }
-        });
-
-        // Function to get the path to the user's classes collection
-        function getClassesCollectionRef() {
-            if (!userId) {
-                console.error("User ID not available.");
-                return null;
-            }
-            // Private data path: /artifacts/{appId}/users/{userId}/classes
-            return collection(db, `artifacts/${appId}/users/${userId}/classes`);
-        }
-        
-        // --- Add Class Functionality (Write to Firestore) ---
-        scheduleForm.addEventListener('submit', async (e) => {
-            e.preventDefault();
-
-            if (!userId) {
-                displayMessage('Schedule manager is still authenticating. Please wait.', true);
-                return;
-            }
-
-            const classesRef = getClassesCollectionRef();
-            if (!classesRef) return;
-
-            const className = document.getElementById('className').value;
-            const teacherName = document.getElementById('teacherName').value; // Get new field value
-            const classDate = document.getElementById('classDate').value;
-            const classTime = document.getElementById('classTime').value;
-            const classLocation = document.getElementById('classLocation').value;
-
-            // Combine date and time to create a single timestamp for sorting
-            const dateTimeString = `${classDate}T${classTime}:00`;
-            const classTimestamp = new Date(dateTimeString);
-
-            if (isNaN(classTimestamp)) {
-                displayMessage('Invalid Date or Time entered.', true);
-                return;
-            }
-
-            try {
-                // Add the new class document to Firestore, including teacherName
-                await addDoc(classesRef, {
-                    className,
-                    teacherName, // Store teacher name
-                    classDate,
-                    classTime,
-                    classLocation,
-                    createdAt: Timestamp.fromDate(classTimestamp) // Use combined date/time for sorting
-                });
-
-                displayMessage(`Class "${className}" with ${teacherName} added successfully!`);
-                scheduleForm.reset();
-            } catch (error) {
-                console.error("Error adding document: ", error);
-                displayMessage('Error saving class. Check the console for details.', true);
-            }
-        });
-
-        // --- Delete Class Functionality (Delete from Firestore) ---
-        window.deleteClass = async (docId) => {
-            if (!userId) {
-                displayMessage('Authentication not complete. Cannot delete.', true);
-                return;
-            }
-            
-            try {
-                // Document path: /artifacts/{appId}/users/{userId}/classes/{docId}
-                const classDocRef = doc(db, `artifacts/${appId}/users/${userId}/classes`, docId);
-                await deleteDoc(classDocRef);
-                displayMessage('Class deleted successfully.');
-            } catch (error) {
-                console.error("Error deleting document: ", error);
-                displayMessage('Error deleting class. Check the console for details.', true);
-            }
-        };
-
-        // --- Schedule Listener (Read from Firestore) ---
-        function setupScheduleListener() {
-            const classesRef = getClassesCollectionRef();
-            if (!classesRef) return;
-
-            // Query the classes, ordered by the timestamp
-            const q = query(classesRef, orderBy("createdAt", "asc"));
-
-            // Set up real-time listener
-            onSnapshot(q, (snapshot) => {
-                const classes = [];
-                snapshot.forEach((doc) => {
-                    classes.push({ id: doc.id, ...doc.data() });
-                });
-
-                renderSchedule(classes);
-            }, (error) => {
-                console.error("Error listening to schedule: ", error);
-                scheduleContainer.innerHTML = '<p class="text-red-500">Error loading schedule.</p>';
+                button.onclick = () => {
+                    selectedDay = day;
+                    renderDayFilters(); // Re-render to update active state
+                    renderSchedule();
+                };
+                dayFilterContainer.appendChild(button);
             });
+            currentDaySubheader.textContent = `Viewing Schedule for: ${selectedDay}`;
         }
 
-        // --- Render Schedule to UI ---
-        function renderSchedule(classes) {
-            if (classes.length === 0) {
-                scheduleContainer.innerHTML = '<p class="text-gray-500 p-4">Your schedule is currently empty. Add a class using the form on the left!</p>';
+        // --- Data Logic ---
+
+        function addClass(subject, teacher, day, time, location) {
+            const classId = crypto.randomUUID();
+            const newEntry = { id: classId, Subject: subject, Teacher: teacher, Day: day, Time: time, Location: location };
+            schedule.push(newEntry);
+            scheduleForm.reset(); // Clear form on submit
+            formMessage.innerHTML = `<span style="color: green;">Class '${subject}' on ${day} added successfully! ✅</span>`;
+            setTimeout(() => formMessage.textContent = '', 3000); // Clear message after 3 seconds
+            renderSchedule();
+            selectedDay = day; // Switch filter to the added day
+            renderDayFilters();
+        }
+
+        function deleteClass(classId) {
+            schedule = schedule.filter(cls => cls.id !== classId);
+            renderSchedule();
+        }
+
+        function sortAndFilterSchedule() {
+            // 1. Filter by selected day
+            const filtered = schedule.filter(cls => cls.Day === selectedDay);
+
+            // 2. Sort by time (Time property is a string 'HH:MM', which sorts correctly lexicographically)
+            filtered.sort((a, b) => a.Time.localeCompare(b.Time));
+
+            return filtered;
+        }
+
+        // --- Render Logic ---
+
+        function renderSchedule() {
+            const filteredSchedule = sortAndFilterSchedule();
+            scheduleTableBody.innerHTML = ''; // Clear existing rows
+
+            if (schedule.length === 0) {
+                scheduleTableBody.innerHTML = `<div class="schedule-empty">Your entire schedule is currently empty. Add a class using the form on the left!</div>`;
                 return;
             }
 
-            let tableHtml = `
-                <table class="schedule-table w-full border-collapse">
-                    <thead>
-                        <tr class="bg-blue-50 text-blue-800">
-                            <th class="rounded-tl-lg">Subject</th>
-                            <th>Teacher</th> <!-- New column header -->
-                            <th>Date</th>
-                            <th>Time</th>
-                            <th>Location</th>
-                            <th class="rounded-tr-lg">Actions</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-            `;
+            if (filteredSchedule.length === 0) {
+                scheduleTableBody.innerHTML = `<div class="schedule-empty">No classes scheduled for <b>${selectedDay}</b>. Add one using the form on the left!</div>`;
+                return;
+            }
 
-            classes.forEach(cls => {
-                tableHtml += `
-                    <tr class="border-t border-gray-200 hover:bg-gray-50">
-                        <td>${cls.className}</td>
-                        <td>${cls.teacherName || 'N/A'}</td> <!-- Display teacher name -->
-                        <td>${cls.classDate}</td>
-                        <td>${cls.classTime}</td>
-                        <td>${cls.classLocation}</td>
-                        <td>
-                            <button onclick="deleteClass('${cls.id}')" 
-                                class="text-sm bg-red-500 hover:bg-red-600 text-white font-medium py-1 px-3 rounded-full transition duration-150">
-                                Delete
-                            </button>
-                        </td>
-                    </tr>
+            filteredSchedule.forEach(row => {
+                const rowDiv = document.createElement('div');
+                rowDiv.className = 'schedule-grid';
+                
+                rowDiv.innerHTML = `
+                    <div>${row.Subject}</div>
+                    <div>${row.Teacher}</div>
+                    <div>${row.Time}</div>
+                    <div>${row.Location}</div>
+                    <div>
+                        <button class="btn-delete" data-id="${row.id}">Delete</button>
+                    </div>
                 `;
+                scheduleTableBody.appendChild(rowDiv);
             });
 
-            tableHtml += `
-                    </tbody>
-                </table>
-            `;
-
-            scheduleContainer.innerHTML = tableHtml;
+            // Attach event listeners to the new Delete buttons
+            document.querySelectorAll('.btn-delete').forEach(button => {
+                button.onclick = (e) => {
+                    const classId = e.target.getAttribute('data-id');
+                    deleteClass(classId);
+                };
+            });
         }
 
-        // Ensure the date input is initialized with today's date if not set by default value
-        window.onload = () => {
-             const dateInput = document.getElementById('classDate');
-             const today = new Date();
-             const year = today.getFullYear();
-             const month = String(today.getMonth() + 1).padStart(2, '0');
-             const day = String(today.getDate()).padStart(2, '0');
-             dateInput.value = `${year}-${month}-${day}`;
+        // --- Event Listener for Form Submission ---
+        scheduleForm.onsubmit = function(e) {
+            e.preventDefault();
+            
+            const subject = document.getElementById('subject').value.trim();
+            const teacher = document.getElementById('teacher').value.trim();
+            const day = document.getElementById('day').value;
+            const time = document.getElementById('time').value;
+            const location = document.getElementById('location').value.trim();
+
+            if (subject && teacher && day && time && location) {
+                addClass(subject, teacher, day, time, location);
+            } else {
+                formMessage.textContent = 'Please fill in all fields.';
+            }
         };
+
+        // --- Run on Load ---
+        initializeUI();
 
     </script>
 </body>
